@@ -1,0 +1,1 @@
+"""Licensing storage placeholder."""
