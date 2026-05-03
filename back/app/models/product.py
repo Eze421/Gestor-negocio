@@ -3,6 +3,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 from app.models.product_category import product_category_table
+from app.models.product_supplier import product_supplier_table
 
 
 class Product(Base):
@@ -18,3 +19,8 @@ class Product(Base):
         secondary=product_category_table,
         back_populates="products",
     )
+    suppliers: Mapped[list["Supplier"]] = relationship(
+        secondary=product_supplier_table,
+        back_populates="products",
+    )
+    sale_items: Mapped[list["SaleItem"]] = relationship(back_populates="product")

@@ -92,6 +92,19 @@ copy .env.example .env
 uvicorn app.main:app --reload
 ```
 
+### 7. Verificar creacion de base de datos
+
+Despues del primer arranque correcto del backend, deberia existir:
+
+- `back/data/gestor_negocio.db`
+
+Y tambien pueden aparecer archivos auxiliares de SQLite como:
+
+- `.db-wal`
+- `.db-shm`
+
+Eso es esperado y no se versiona en Git.
+
 ## Preparar el frontend
 
 ### 1. Ir a la carpeta del frontend
@@ -134,7 +147,97 @@ En la carpeta `scripts/` hay ayudas de arranque:
 - `scripts/dev-back.ps1`
 - `scripts/dev-front.ps1`
 
-Pueden usarse desde PowerShell, aunque primero conviene entender el arranque manual.
+Sirven para automatizar el arranque local despues de entender el proceso manual.
+
+### Que hace cada script
+
+`scripts/dev-back.ps1`
+
+- entra a `back/`
+- crea `.venv` si hace falta
+- activa el entorno virtual
+- crea `.env` desde `.env.example` si no existe
+- actualiza `pip`
+- instala dependencias desde `requirements.txt`
+- levanta `uvicorn`
+- genera la base SQLite si todavia no existe
+
+`scripts/dev-front.ps1`
+
+- entra a `front/`
+- crea `.env` desde `.env.example` si no existe
+- detecta `npm` incluso si no quedo bien en el `PATH`
+- instala dependencias si `node_modules` no existe
+- abre el navegador en `http://127.0.0.1:5173`
+- levanta Vite con `npm run dev`
+
+### Como ejecutar los scripts correctamente
+
+#### Si estas parado en la raiz del repo
+
+```powershell
+.\scripts\dev-back.ps1
+.\scripts\dev-front.ps1
+```
+
+#### Si estas parado dentro de la carpeta `scripts`
+
+```powershell
+.\dev-back.ps1
+.\dev-front.ps1
+```
+
+#### Si estas parado dentro de `back`
+
+```powershell
+..\scripts\dev-back.ps1
+```
+
+#### Si estas parado dentro de `front`
+
+```powershell
+..\scripts\dev-front.ps1
+```
+
+### Importante
+
+Los scripts se ejecutan segun la carpeta actual de PowerShell.
+
+Ejemplo:
+
+- si estas en `...\Gestor-negocio\back`, entonces `.\dev-back.ps1` falla
+- falla porque ese archivo no esta dentro de `back/`
+- en ese caso tenes que usar `..\scripts\dev-back.ps1`
+
+### Recomendacion practica
+
+La forma mas simple es ejecutar siempre los scripts desde la raiz del repo:
+
+```powershell
+cd c:\Users\mateo\Documents\github\repos\Gestor-negocio
+.\scripts\dev-back.ps1
+```
+
+o:
+
+```powershell
+cd c:\Users\mateo\Documents\github\repos\Gestor-negocio
+.\scripts\dev-front.ps1
+```
+
+### Que esperar al usar `dev-front.ps1`
+
+Cuando ejecutes el script:
+
+1. va a preparar el entorno del frontend
+2. va a abrir el navegador automaticamente
+3. va a dejar Vite corriendo en la terminal actual
+
+Eso significa que:
+
+- esa terminal queda ocupada por el proceso del frontend
+- para frenarlo tenes que usar `Ctrl + C`
+- si queres volver a lanzarlo, ejecutas el script otra vez
 
 ## Problemas comunes
 
@@ -166,6 +269,28 @@ Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
 ### `uvicorn` no encontrado
 
 Significa que el entorno virtual no esta activo o que faltan dependencias. Reactivar `.venv` y reinstalar.
+
+### `pip install -e .[dev]` falla
+
+En este proyecto, la forma recomendada es:
+
+```powershell
+pip install -r requirements.txt
+```
+
+Esto evita problemas de compatibilidad con algunas versiones de `pip` al instalar en modo editable.
+
+### El script existe pero PowerShell dice que no lo encuentra
+
+Causa probable:
+
+- estas parado en otra carpeta
+
+Ejemplos:
+
+- desde `back/` usar `..\scripts\dev-back.ps1`
+- desde `front/` usar `..\scripts\dev-front.ps1`
+- desde la raiz usar `.\scripts\dev-back.ps1` o `.\scripts\dev-front.ps1`
 
 ### `npm install` falla
 

@@ -32,3 +32,13 @@ class ProductRead(BaseModel):
     stock: int
     active: bool
     categories: list[CategoryRead]
+
+
+class ProductSummaryRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    name: str
+    price: float
+    stock: int
+    active: bool

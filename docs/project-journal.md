@@ -246,7 +246,7 @@ Agregar una nueva entrada cuando ocurra cualquiera de estos casos:
 
 ### Solucion
 
-- se actualizo [back/app/core/config.py](Gestor-negocio/back/app/core/config.py)
+- se actualizo [back/app/core/config.py](/c:/Users/mateo/Documents/github/repos/Gestor-negocio/back/app/core/config.py)
 - se uso `NoDecode` para evitar el parseo JSON automatico
 - se agrego un validador para aceptar strings separados por comas
 
@@ -295,6 +295,165 @@ Agregar una nueva entrada cuando ocurra cualquiera de estos casos:
 
 - los tests quedaron pasando
 - el backend ya expone endpoints reales para que el frontend pueda empezar a integrarse
+
+## 2026-05-03 - Bootstrap real de base de datos local
+
+### Contexto
+
+- se decidio alinear la persistencia con la experiencia del prototipo
+- la idea era que la base se genere en tiempo real y no viva integrada en el codigo
+
+### Cambio realizado
+
+- se agrego configuracion para separar:
+  - `APP_DATA_DIR`
+  - `DATABASE_NAME`
+  - `DATABASE_URL`
+- se creo bootstrap explicito para archivo SQLite
+- el backend ahora crea automaticamente:
+  - carpeta de datos
+  - archivo `.db`
+  - tablas iniciales
+- se incorporo la categoria por defecto `sin categoria`
+- se activaron `PRAGMA foreign_keys = ON` y `journal_mode = WAL`
+
+### Error detectado
+
+- no hubo un error puntual; fue una mejora estructural
+
+### Causa
+
+- la version actual todavia dependia de una URL fija menos parecida al comportamiento del prototipo
+
+### Solucion
+
+- se encapsulo la resolucion de ruta y la creacion del archivo SQLite en la capa `db`
+
+### Notas
+
+- por defecto la base ahora se genera en `back/data/gestor_negocio.db`
+- el archivo y sus auxiliares siguen ignorados por Git
+
+## 2026-05-03 - Replicacion completa del esquema del prototipo
+
+### Contexto
+
+- se pidio replicar todas las tablas y asociaciones del prototipo
+- la condicion fue mantener equivalencia funcional pero con mejores practicas internas
+
+### Cambio realizado
+
+- se agregaron modelos ORM para:
+  - `suppliers`
+  - `clients`
+  - `sales`
+  - `sale_items`
+  - `sale_payments`
+  - `cash_movements`
+  - `cash_closings`
+- se agrego la relacion muchos a muchos:
+  - `product_suppliers`
+- se mantuvo la relacion:
+  - `product_categories`
+- se creo documentacion nueva del esquema:
+  - `docs/database-schema.md`
+- se agregaron pruebas de esquema para validar tablas y foreign keys
+
+### Error detectado
+
+- no hubo un error puntual; fue una ampliacion estructural importante
+
+### Causa
+
+- la version nueva solo cubria una parte del dominio original
+
+### Solucion
+
+- se trasladaron todas las entidades del prototipo a modelos ORM completos y documentados
+
+### Notas
+
+- todavia no todos los modulos tienen CRUD o casos de uso implementados
+- ahora la base de datos ya refleja la estructura global del negocio
+
+## 2026-05-03 - CRUD inicial de clientes y proveedores
+
+### Contexto
+
+- despues de completar el esquema global, se pidio avanzar modulo por modulo
+- se eligio continuar con `clientes` y `proveedores`
+
+### Cambio realizado
+
+- se agregaron rutas API para `clients`
+- se agregaron rutas API para `suppliers`
+- se crearon:
+  - schemas
+  - repositories
+  - services
+  - tests
+- `clients` quedo con soft delete
+- `suppliers` quedo con asociacion opcional a productos
+
+### Error detectado
+
+- no hubo errores bloqueantes en esta etapa
+
+### Causa
+
+- no aplica
+
+### Solucion
+
+- no aplica
+
+### Notas
+
+- los tests quedaron pasando
+- ya hay una base clara para seguir con `sales`
+
+## 2026-05-03 - Implementacion transaccional del modulo de ventas
+
+### Contexto
+
+- despues de productos, clientes y proveedores, se avanzo con `sales`
+- el objetivo fue respetar la logica real del prototipo, no solo crear tablas
+
+### Cambio realizado
+
+- se agregaron rutas para:
+  - crear ventas
+  - listar ventas
+  - ver detalle de venta
+  - listar ventas pendientes
+  - registrar pagos sobre ventas existentes
+- se implemento flujo transaccional con:
+  - validacion de stock
+  - calculo de subtotales y total
+  - cliente opcional o auto-creado por DNI
+  - pago inicial segun estado
+  - movimiento de caja asociado al cobro
+  - actualizacion automatica del estado de venta
+- se agregaron tests del flujo de ventas
+
+### Error detectado
+
+- aparecieron fallos ORM por carga de relaciones y construccion de items en sesion
+
+### Causa
+
+- una opcion de carga usaba string en vez de atributo ORM
+- los items se asociaban al producto antes de agregarse correctamente a sesion
+
+### Solucion
+
+- se corrigio `selectinload` usando atributos enlazados
+- se rearmo la creacion de `sale_items` para evitar asociaciones inconsistentes
+
+### Notas
+
+- el flujo base de ventas ya quedo operativo
+- faltan todavia endpoints administrativos de caja y cierres
 
 ## Proximas entradas sugeridas
 
