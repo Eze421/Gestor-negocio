@@ -11,6 +11,8 @@ class Product(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(160), unique=True, index=True)
+    sku: Mapped[str | None] = mapped_column(String(64), unique=True, index=True, nullable=True)
+    barcode: Mapped[str | None] = mapped_column(String(64), unique=True, index=True, nullable=True)
     price: Mapped[float] = mapped_column(Numeric(10, 2))
     stock: Mapped[int] = mapped_column(default=0)
     active: Mapped[bool] = mapped_column(Boolean, default=True, index=True)

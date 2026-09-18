@@ -77,6 +77,7 @@ uvicorn app.main:app --reload
 - `DELETE /api/clients/{id}`
 - `GET /api/products`
 - `GET /api/products/{id}`
+- `GET /api/products/lookup?code={codigo}`
 - `POST /api/products`
 - `PATCH /api/products/{id}`
 - `DELETE /api/products/{id}`
@@ -105,4 +106,5 @@ El backend ya tiene un primer dominio funcional implementado:
 - soft delete de productos
 - soft delete de clientes
 - filtros basicos por categoria y busqueda por nombre
+- SKU y codigo de barras persistentes, con busqueda exacta para lectores POS
 - registro atomico de ventas con validacion de stock, pagos y caja

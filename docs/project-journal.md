@@ -455,6 +455,25 @@ Agregar una nueva entrada cuando ocurra cualquiera de estos casos:
 - el flujo base de ventas ya quedo operativo
 - faltan todavia endpoints administrativos de caja y cierres
 
+## 2026-09-16 - Identificadores persistentes y consulta para lector POS
+
+### Contexto
+
+- el frontend tenia SKU y codigo de barras solo en `localStorage`
+- hacia falta que un lector de pistola pudiera consultar el catalogo desde la API
+
+### Cambio realizado
+
+- se agregaron los campos opcionales `sku` y `barcode` al producto
+- ambos identificadores son unicos e indexados
+- se incorporo `GET /api/products/lookup?code={codigo}` para buscar un producto activo por SKU o codigo de barras
+- se agregaron pruebas para la consulta, los codigos duplicados y ceros iniciales
+
+### Notas
+
+- los codigos se tratan como texto para preservar ceros iniciales
+- como se puede reiniciar la base local, no se agrego una migracion: la SQLite se regenera con el nuevo esquema al iniciar el backend
+
 ## Proximas entradas sugeridas
 
 - primer modelo ORM real

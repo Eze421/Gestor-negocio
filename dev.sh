@@ -1,98 +1,89 @@
 #!/usr/bin/env bash
 
-# Colores para la consola
+set -Eeuo pipefail
+
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
 YELLOW='\033[1;33m'
 RED='\033[0;31m'
-NC='\033[0m' # No Color
+NC='\033[0m'
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BACKEND_DIR="$ROOT_DIR/back"
+FRONTEND_DIR="$ROOT_DIR/front"
+BACKEND_PID=""
+FRONTEND_PID=""
+
+fail() {
+    echo -e "${RED}Error: $1${NC}" >&2
+    exit 1
+}
+
+cleanup() {
+    if [ -n "$BACKEND_PID$FRONTEND_PID" ]; then
+        echo -e "\n${YELLOW}Deteniendo servidores...${NC}"
+    fi
+
+    for pid in "$BACKEND_PID" "$FRONTEND_PID"; do
+        if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
+            kill -TERM "$pid" 2>/dev/null || true
+        fi
+    done
+
+    wait 2>/dev/null || true
+}
+
+trap cleanup EXIT
+trap 'exit 0' INT TERM
+
+command -v python3 >/dev/null 2>&1 || fail "No se encontro python3. Instala Python 3.10 o superior."
+command -v npm >/dev/null 2>&1 || fail "No se encontro npm. Instala Node.js 20 LTS o superior."
 
 echo -e "${BLUE}=== Iniciando Gestor Negocio (Entorno de Desarrollo) ===${NC}"
 
-# Función de limpieza al detener el script
-cleanup() {
-    echo -e "\n${YELLOW}Deteniendo servidores...${NC}"
-    # Matar todos los procesos secundarios iniciados por este script bash
-    kill $(jobs -p) 2>/dev/null
-    exit
-}
-
-# Capturar señal de Ctrl+C (SIGINT) y SIGTERM para apagar todo ordenadamente
-trap cleanup SIGINT SIGTERM
-
-# Directorio raíz del proyecto
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-# --- CONFIGURAR E INICIAR BACKEND ---
 echo -e "\n${GREEN}[Backend] Preparando entorno...${NC}"
-cd "$ROOT_DIR/back"
+cd "$BACKEND_DIR"
 
-# Verificar si el entorno virtual existente es válido para este directorio
-if [ -d ".venv" ]; then
-    # Leer la shebang de pip para verificar si apunta a un python existente en esta máquina
-    VENV_SHEBANG_PYTHON=$(head -n 1 .venv/bin/pip 2>/dev/null | sed 's/^#!//')
-    if [ -z "$VENV_SHEBANG_PYTHON" ] || [ ! -f "$VENV_SHEBANG_PYTHON" ]; then
-        echo -e "${YELLOW}[Backend] Se detectó un entorno virtual con rutas rotas o copiado de otra ubicación. Recreando .venv...${NC}"
-        rm -rf .venv
+if [ ! -x ".venv/bin/python" ]; then
+    if [ -e ".venv" ]; then
+        fail "El entorno back/.venv no es valido. Eliminalo manualmente y volve a ejecutar el script."
     fi
+    echo -e "${YELLOW}[Backend] Creando entorno virtual...${NC}"
+    python3 -m venv .venv || fail "No se pudo crear .venv. Verifica que python3-venv este instalado."
 fi
 
-# Crear entorno virtual si no existe o fue eliminado
-if [ ! -d ".venv" ]; then
-    echo -e "${YELLOW}[Backend] Entorno virtual (.venv) no encontrado. Creándolo...${NC}"
-    python3 -m venv .venv || { echo -e "${RED}[Backend] Error al crear .venv. Asegúrate de tener python3-venv instalado.${NC}"; exit 1; }
-fi
-
-# Activar entorno virtual
-source .venv/bin/activate || { echo -e "${RED}[Backend] Error al activar .venv${NC}"; exit 1; }
-
-# Crear .env desde el de ejemplo si no existe
 if [ ! -f ".env" ]; then
-    echo -e "${YELLOW}[Backend] Creando archivo .env desde .env.example...${NC}"
+    echo -e "${YELLOW}[Backend] Creando .env desde .env.example...${NC}"
     cp .env.example .env
 fi
 
-# Instalar dependencias del backend usando el pip del entorno virtual directamente
-echo -e "${GREEN}[Backend] Verificando e instalando dependencias (requirements.txt)...${NC}"
-.venv/bin/pip install --upgrade pip
-.venv/bin/pip install -r requirements.txt || { echo -e "${RED}[Backend] Error al instalar dependencias del backend.${NC}"; exit 1; }
+echo -e "${GREEN}[Backend] Instalando dependencias...${NC}"
+.venv/bin/python -m pip install -r requirements.txt || fail "No se pudieron instalar las dependencias del backend."
 
-# Levantar el backend en segundo plano usando el uvicorn del entorno virtual directamente
-echo -e "${GREEN}[Backend] Iniciando servidor FastAPI con Uvicorn...${NC}"
-.venv/bin/uvicorn app.main:app --reload &
+echo -e "${GREEN}[Backend] Iniciando FastAPI...${NC}"
+.venv/bin/python -m uvicorn app.main:app --reload &
+BACKEND_PID=$!
 
-# --- CONFIGURAR E INICIAR FRONTEND ---
 echo -e "\n${BLUE}[Frontend] Preparando entorno...${NC}"
-cd "$ROOT_DIR/front"
+cd "$FRONTEND_DIR"
 
-# Crear .env si no existe
 if [ ! -f ".env" ]; then
-    echo -e "${YELLOW}[Frontend] Creando archivo .env desde .env.example...${NC}"
+    echo -e "${YELLOW}[Frontend] Creando .env desde .env.example...${NC}"
     cp .env.example .env
 fi
 
-# Verificar si node_modules está roto o copiado de otra ruta
-if [ -d "node_modules" ]; then
-    if ! ./node_modules/.bin/vite --version &>/dev/null; then
-        echo -e "${YELLOW}[Frontend] Se detectaron dependencias de Node rotas o copiadas de otra ruta. Reinstalando node_modules...${NC}"
-        rm -rf node_modules
-    fi
+if [ ! -x "node_modules/.bin/vite" ]; then
+    echo -e "${YELLOW}[Frontend] Instalando dependencias...${NC}"
+    npm ci || fail "No se pudieron instalar las dependencias del frontend."
 fi
 
-# Instalar dependencias si no existe node_modules o fue eliminado
-if [ ! -d "node_modules" ]; then
-    echo -e "${YELLOW}[Frontend] Carpeta node_modules no encontrada o inválida. Instalando dependencias de Node...${NC}"
-    npm install || { echo -e "${RED}[Frontend] Error al instalar dependencias del frontend.${NC}"; exit 1; }
-fi
-
-# Levantar el frontend en segundo plano
-echo -e "${BLUE}[Frontend] Iniciando servidor de desarrollo con Vite...${NC}"
+echo -e "${BLUE}[Frontend] Iniciando Vite...${NC}"
 npm run dev &
+FRONTEND_PID=$!
 
-echo -e "\n${GREEN}=== Servidores iniciados con éxito ===${NC}"
-echo -e "Backend expuesto en:  ${BLUE}http://127.0.0.1:8000${NC} (Documentación: http://127.0.0.1:8000/docs)"
-echo -e "Frontend expuesto en: ${BLUE}http://127.0.0.1:5173${NC}"
-echo -e "${YELLOW}Presiona Ctrl+C en cualquier momento para detener ambos servidores.${NC}\n"
+echo -e "\n${GREEN}=== Servidores iniciados ===${NC}"
+echo -e "Backend:  ${BLUE}http://127.0.0.1:8000${NC} (docs: http://127.0.0.1:8000/docs)"
+echo -e "Frontend: ${BLUE}http://127.0.0.1:5173${NC}"
+echo -e "${YELLOW}Presiona Ctrl+C para detener ambos servidores.${NC}\n"
 
-# Mantener el script corriendo y esperar a los procesos secundarios
-wait
+wait "$BACKEND_PID" "$FRONTEND_PID"

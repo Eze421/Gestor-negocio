@@ -5,6 +5,8 @@ from app.schemas.category import CategoryRead
 
 class ProductBase(BaseModel):
     name: str = Field(min_length=1, max_length=160)
+    sku: str | None = Field(default=None, min_length=1, max_length=64)
+    barcode: str | None = Field(default=None, min_length=1, max_length=64)
     price: float = Field(gt=0)
     stock: int = Field(ge=0)
     active: bool = True
@@ -17,6 +19,8 @@ class ProductCreate(ProductBase):
 
 class ProductUpdate(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=160)
+    sku: str | None = Field(default=None, min_length=1, max_length=64)
+    barcode: str | None = Field(default=None, min_length=1, max_length=64)
     price: float | None = Field(default=None, gt=0)
     stock: int | None = Field(default=None, ge=0)
     active: bool | None = None
@@ -28,6 +32,8 @@ class ProductRead(BaseModel):
 
     id: int
     name: str
+    sku: str | None
+    barcode: str | None
     price: float
     stock: int
     active: bool
@@ -39,6 +45,8 @@ class ProductSummaryRead(BaseModel):
 
     id: int
     name: str
+    sku: str | None
+    barcode: str | None
     price: float
     stock: int
     active: bool

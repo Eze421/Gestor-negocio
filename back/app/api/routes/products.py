@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_db
@@ -20,6 +20,17 @@ def list_products(
         category_id=category_id,
         include_inactive=include_inactive,
     )
+
+
+@router.get("/lookup", response_model=ProductRead)
+def lookup_product(
+    code: str = Query(min_length=1, max_length=64),
+    db: Session = Depends(get_db),
+) -> ProductRead:
+    try:
+        return ProductService(db).lookup_product(code)
+    except LookupError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
 
 
 @router.get("/{product_id}", response_model=ProductRead)

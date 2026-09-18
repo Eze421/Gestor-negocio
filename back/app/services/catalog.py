@@ -14,6 +14,16 @@ def _normalize_name(value: str) -> str:
     return normalized
 
 
+def _normalize_identifier(value: str | None, field_name: str) -> str | None:
+    if value is None:
+        return None
+
+    normalized = value.strip()
+    if not normalized:
+        raise ValueError(f"El {field_name} no puede estar vacio")
+    return normalized
+
+
 class CategoryService:
     def __init__(self, db: Session) -> None:
         self.db = db
@@ -83,14 +93,28 @@ class ProductService:
             raise LookupError("Producto no encontrado")
         return product
 
+    def lookup_product(self, code: str) -> Product:
+        normalized_code = _normalize_identifier(code, "codigo")
+        assert normalized_code is not None
+        product = self.repository.get_by_identifier(normalized_code)
+        if product is None or not product.active:
+            raise LookupError("Producto no encontrado")
+        return product
+
     def create_product(self, payload: ProductCreate) -> Product:
         name = _normalize_name(payload.name)
         if self.repository.get_by_name(name):
             raise ValueError("Ya existe un producto con ese nombre")
 
+        sku = _normalize_identifier(payload.sku, "SKU")
+        barcode = _normalize_identifier(payload.barcode, "codigo de barras")
+        self._validate_identifiers(sku, barcode)
+
         categories = self._resolve_categories(payload.category_ids)
         product = Product(
             name=name,
+            sku=sku,
+            barcode=barcode,
             price=payload.price,
             stock=payload.stock,
             active=payload.active,
@@ -110,6 +134,13 @@ class ProductService:
             if existing and existing.id != product.id:
                 raise ValueError("Ya existe un producto con ese nombre")
             product.name = name
+
+        if "sku" in payload.model_fields_set:
+            product.sku = _normalize_identifier(payload.sku, "SKU")
+        if "barcode" in payload.model_fields_set:
+            product.barcode = _normalize_identifier(payload.barcode, "codigo de barras")
+        if {"sku", "barcode"} & payload.model_fields_set:
+            self._validate_identifiers(product.sku, product.barcode, exclude_product_id=product.id)
 
         if payload.price is not None:
             product.price = payload.price
@@ -143,3 +174,15 @@ class ProductService:
             categories.append(category)
 
         return categories
+
+    def _validate_identifiers(
+        self,
+        sku: str | None,
+        barcode: str | None,
+        *,
+        exclude_product_id: int | None = None,
+    ) -> None:
+        for identifier in {sku, barcode} - {None}:
+            existing = self.repository.get_by_identifier(identifier)
+            if existing is not None and existing.id != exclude_product_id:
+                raise ValueError("El SKU o codigo de barras ya pertenece a otro producto")

@@ -80,6 +80,8 @@ Campos principales:
 
 - `id`
 - `name`
+- `sku`
+- `barcode`
 - `price`
 - `stock`
 - `active`
@@ -94,6 +96,7 @@ Notas:
 
 - `active` permite soft delete
 - `stock` queda preparado para ventas e inventario
+- `sku` y `barcode` son opcionales, unicos e indexados; el codigo se conserva como texto para no perder ceros iniciales
 
 ### `product_categories`
 

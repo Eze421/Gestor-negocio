@@ -1,4 +1,4 @@
-from sqlalchemy import Select, select
+from sqlalchemy import Select, or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.models.category import Category
@@ -61,6 +61,12 @@ class ProductRepository:
 
     def get_by_name(self, name: str) -> Product | None:
         stmt = self._base_stmt().where(Product.name == name)
+        return self.db.scalar(stmt)
+
+    def get_by_identifier(self, code: str) -> Product | None:
+        stmt = self._base_stmt().where(
+            or_(Product.barcode == code, Product.sku == code)
+        )
         return self.db.scalar(stmt)
 
     def create(self, product: Product) -> Product:
