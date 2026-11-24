@@ -11,11 +11,25 @@ Tener levantados:
 - backend en `http://127.0.0.1:8000`
 - frontend en `http://127.0.0.1:5173`
 
-Si todavia no lo hiciste, seguir [docs/getting-started.md](Gestor-negocio/docs/getting-started.md).
+Si todavia no lo hiciste, seguir [docs/getting-started.md](/c:/Users/mateo/Documents/github/repos/Gestor-negocio/docs/getting-started.md).
+
+## Checklist de archivo de base de datos
+
+### 1. Creacion del archivo SQLite
+
+Despues de levantar el backend por primera vez, verificar que exista:
+
+- `back/data/gestor_negocio.db`
+
+Resultado esperado:
+
+- el archivo fue creado automaticamente
+- no hizo falta agregarlo manualmente al repo
+- pueden existir tambien `gestor_negocio.db-wal` y `gestor_negocio.db-shm`
 
 ## Checklist del backend
 
-### 1. Root de la API
+### 2. Root de la API
 
 Abrir:
 
@@ -26,7 +40,7 @@ Resultado esperado:
 - respuesta JSON con nombre de la app
 - campo `status` con valor `ok`
 
-### 2. Healthcheck
+### 3. Healthcheck
 
 Abrir:
 
@@ -37,7 +51,7 @@ Resultado esperado:
 - `status = ok`
 - `timestamp` presente
 
-### 3. Modulos
+### 4. Modulos
 
 Abrir:
 
@@ -49,7 +63,7 @@ Resultado esperado:
 - modulos planificados visibles
 - sin error 500
 
-### 4. Crear categoria
+### 5. Crear categoria
 
 En `http://127.0.0.1:8000/docs`, usar `POST /api/categories` con:
 
@@ -64,7 +78,7 @@ Resultado esperado:
 - status `201`
 - categoria creada con `id`
 
-### 5. Listar categorias
+### 6. Listar categorias
 
 Abrir:
 
@@ -74,7 +88,7 @@ Resultado esperado:
 
 - lista JSON con la categoria creada
 
-### 6. Crear producto
+### 7. Crear producto
 
 En `http://127.0.0.1:8000/docs`, usar `POST /api/products` con:
 
@@ -93,7 +107,7 @@ Resultado esperado:
 - status `201`
 - producto creado con categorias embebidas
 
-### 7. Listar productos
+### 8. Listar productos
 
 Abrir:
 
@@ -103,7 +117,7 @@ Resultado esperado:
 
 - lista JSON con productos activos
 
-### 8. Filtrar productos por categoria
+### 9. Filtrar productos por categoria
 
 Abrir:
 
@@ -113,7 +127,7 @@ Resultado esperado:
 
 - lista de productos asociados a esa categoria
 
-### 9. Soft delete de producto
+### 10. Soft delete de producto
 
 En `http://127.0.0.1:8000/docs`, usar `DELETE /api/products/{id}`.
 
@@ -123,7 +137,64 @@ Resultado esperado:
 - el producto ya no aparece en `GET /api/products`
 - el producto aparece si se consulta con `include_inactive=true`
 
-### 10. Documentacion interactiva de FastAPI
+### 11. Crear cliente
+
+En `http://127.0.0.1:8000/docs`, usar `POST /api/clients` con:
+
+```json
+{
+  "dni": "12345678",
+  "name": "Juan Perez",
+  "phone": "1122334455",
+  "active": true
+}
+```
+
+Resultado esperado:
+
+- status `201`
+- cliente creado con `id`
+
+### 12. Soft delete de cliente
+
+En `http://127.0.0.1:8000/docs`, usar `DELETE /api/clients/{id}`.
+
+Resultado esperado:
+
+- status `204`
+- el cliente deja de aparecer en `GET /api/clients`
+- aparece en `GET /api/clients?include_inactive=true`
+
+### 13. Crear proveedor asociado a producto
+
+En `http://127.0.0.1:8000/docs`, usar `POST /api/suppliers` con:
+
+```json
+{
+  "name": "Mayorista Centro",
+  "phone": "1144556677",
+  "email": "ventas@mayoristacentro.test",
+  "address": "Calle 123",
+  "product_ids": [1]
+}
+```
+
+Resultado esperado:
+
+- status `201`
+- proveedor creado con `id`
+- lista `products` embebida en la respuesta
+
+### 14. Editar proveedor
+
+En `http://127.0.0.1:8000/docs`, usar `PATCH /api/suppliers/{id}`.
+
+Resultado esperado:
+
+- se actualizan datos basicos
+- se puede cambiar la asociacion con productos
+
+### 15. Documentacion interactiva de FastAPI
 
 Abrir:
 
@@ -133,6 +204,106 @@ Resultado esperado:
 
 - swagger cargando correctamente
 - endpoints visibles
+
+### 16. Crear venta fiada
+
+En `http://127.0.0.1:8000/docs`, usar `POST /api/sales` con:
+
+```json
+{
+  "status": 0,
+  "items": [
+    {
+      "product_id": 1,
+      "quantity": 2
+    }
+  ]
+}
+```
+
+Resultado esperado:
+
+- status `201`
+- se crea la venta
+- baja el stock del producto
+- el saldo queda igual al total
+
+### 17. Crear venta parcial con pago inicial
+
+En `http://127.0.0.1:8000/docs`, usar `POST /api/sales` con:
+
+```json
+{
+  "status": 1,
+  "items": [
+    {
+      "product_id": 1,
+      "quantity": 1
+    }
+  ],
+  "payment": {
+    "amount": 5000,
+    "payment_method": 0
+  }
+}
+```
+
+Resultado esperado:
+
+- la venta queda en estado parcial
+- aparece un pago registrado
+- se genera movimiento de caja
+
+### 18. Crear venta pagada con cliente
+
+En `http://127.0.0.1:8000/docs`, usar `POST /api/sales` con:
+
+```json
+{
+  "status": 2,
+  "items": [
+    {
+      "product_id": 1,
+      "quantity": 1
+    }
+  ],
+  "client": {
+    "dni": "30111222",
+    "name": "Ana Gomez",
+    "phone": "1133445566"
+  },
+  "payment": {
+    "payment_method": 1
+  }
+}
+```
+
+Resultado esperado:
+
+- la venta queda pagada
+- si el cliente no existia, se crea
+- el saldo final queda en `0`
+
+### 19. Registrar pago sobre venta existente
+
+En `http://127.0.0.1:8000/docs`, usar `POST /api/sales/{id}/payments`.
+
+Resultado esperado:
+
+- se registra un nuevo pago
+- se actualiza el saldo
+- si el total se cubre, la venta pasa a pagada
+
+### 20. Listar ventas pendientes
+
+Abrir:
+
+- `http://127.0.0.1:8000/api/sales/pending`
+
+Resultado esperado:
+
+- devuelve ventas con saldo pendiente
+- incluye identificacion simple del cliente y saldo
 
 ## Checklist del frontend
 

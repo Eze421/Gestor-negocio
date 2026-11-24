@@ -1,4 +1,5 @@
 from functools import lru_cache
+from pathlib import Path
 from typing import Annotated
 
 from pydantic import Field, field_validator
@@ -12,7 +13,9 @@ class Settings(BaseSettings):
     api_prefix: str = "/api"
     api_host: str = Field(default="127.0.0.1", alias="API_HOST")
     api_port: int = Field(default=8000, alias="API_PORT")
-    database_url: str = Field(default="sqlite:///./gestor_negocio.db", alias="DATABASE_URL")
+    app_data_dir: str = Field(default="./data", alias="APP_DATA_DIR")
+    database_name: str = Field(default="gestor_negocio.db", alias="DATABASE_NAME")
+    database_url: str | None = Field(default=None, alias="DATABASE_URL")
     cors_origins: Annotated[list[str], NoDecode] = Field(
         default=["http://127.0.0.1:5173", "http://localhost:5173"],
         alias="CORS_ORIGINS",
@@ -32,6 +35,27 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         case_sensitive=False,
     )
+
+    @property
+    def base_dir(self) -> Path:
+        return Path(__file__).resolve().parents[2]
+
+    @property
+    def resolved_data_dir(self) -> Path:
+        data_dir = Path(self.app_data_dir)
+        if data_dir.is_absolute():
+            return data_dir
+        return (self.base_dir / data_dir).resolve()
+
+    @property
+    def resolved_database_path(self) -> Path:
+        return self.resolved_data_dir / self.database_name
+
+    @property
+    def resolved_database_url(self) -> str:
+        if self.database_url:
+            return self.database_url
+        return f"sqlite:///{self.resolved_database_path.as_posix()}"
 
 
 @lru_cache

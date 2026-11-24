@@ -9,7 +9,6 @@ from sqlalchemy.orm import Session, sessionmaker
 from app.api.dependencies import get_db
 from app.db.base import Base
 from app.main import app
-from app.models import Category, Product
 
 
 @pytest.fixture

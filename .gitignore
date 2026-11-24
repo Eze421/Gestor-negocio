@@ -9,13 +9,17 @@ venv/
 
 # SQLite / local data
 *.db
+*.db-shm
+*.db-wal
 *.sqlite
 *.sqlite3
+back/data/
 
 # Node / frontend
 node_modules/
 dist/
 coverage/
+*.tsbuildinfo
 
 # Env files
 .env

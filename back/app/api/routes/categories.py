@@ -8,11 +8,13 @@ from app.services.catalog import CategoryService
 router = APIRouter()
 
 
+@router.get("", response_model=list[CategoryRead], include_in_schema=False)
 @router.get("/", response_model=list[CategoryRead])
 def list_categories(db: Session = Depends(get_db)) -> list[CategoryRead]:
     return CategoryService(db).list_categories()
 
 
+@router.post("", response_model=CategoryRead, status_code=status.HTTP_201_CREATED, include_in_schema=False)
 @router.post("/", response_model=CategoryRead, status_code=status.HTTP_201_CREATED)
 def create_category(payload: CategoryCreate, db: Session = Depends(get_db)) -> CategoryRead:
     try:

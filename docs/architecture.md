@@ -111,6 +111,19 @@ Mas adelante se pueden agregar:
 - exportacion y backup
 - soporte para motores alternativos si fuera necesario
 
+### Comportamiento actual del archivo SQLite
+
+La base de datos no viene incluida en el repo.
+
+Al arrancar el backend:
+
+- se crea la carpeta de datos si no existe
+- se genera el archivo SQLite si no existe
+- se crean las tablas necesarias
+- se inserta la categoria por defecto `sin categoria`
+
+Esto replica la idea operativa del prototipo, pero manteniendo la arquitectura nueva.
+
 ## Configuracion
 
 Cada parte tiene su propio archivo de entorno de ejemplo:
@@ -159,6 +172,8 @@ El primer dominio real implementado en backend es catalogo e inventario base:
 - soft delete de productos con campo `active`
 
 Esto permite empezar el desarrollo real del frontend contra una API concreta.
+
+El detalle completo del modelo de datos actual esta en [docs/database-schema.md](/c:/Users/mateo/Documents/github/repos/Gestor-negocio/docs/database-schema.md).
 
 ## Prioridades tecnicas
 

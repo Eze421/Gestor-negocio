@@ -110,6 +110,8 @@ La base del proyecto ya esta creada:
 - frontend con estructura por features
 - endpoints iniciales de salud y listado de modulos
 - CRUD real para categorias y productos en backend
+- CRUD real para clientes y proveedores en backend
+- flujo real de ventas con pagos y movimientos de caja en backend
 - archivos de entorno de ejemplo
 - scripts de arranque
 - documentacion inicial
@@ -124,7 +126,17 @@ Si acabas de clonar el repo, segui esta guia:
 2. Configura el entorno con [docs/getting-started.md](/c:/Users/mateo/Documents/github/repos/Gestor-negocio/docs/getting-started.md)
 3. Valida el arranque con [docs/manual-testing.md](/c:/Users/mateo/Documents/github/repos/Gestor-negocio/docs/manual-testing.md)
 
-## Arranque rapido manual
+## Arranque rápido unificado (Linux / macOS)
+
+Si utilizas Linux o macOS, puedes levantar todo el entorno (frontend y backend en paralelo) ejecutando un único comando desde la raíz del proyecto:
+
+```bash
+./dev.sh
+```
+
+Este script automatiza la creación del entorno virtual de Python, copia los archivos `.env.example` a `.env`, instala todas las dependencias y enciende ambos servidores. Presiona `Ctrl + C` para apagar ambos servicios al mismo tiempo.
+
+## Arranque rápido manual (Windows / Paso a Paso)
 
 ### Backend
 
@@ -155,11 +167,26 @@ npm run dev
 - `POST /api/categories`
 - `PATCH /api/categories/{id}`
 - `DELETE /api/categories/{id}`
+- `GET /api/clients`
+- `GET /api/clients/{id}`
+- `POST /api/clients`
+- `PATCH /api/clients/{id}`
+- `DELETE /api/clients/{id}`
 - `GET /api/products`
 - `GET /api/products/{id}`
 - `POST /api/products`
 - `PATCH /api/products/{id}`
 - `DELETE /api/products/{id}`
+- `GET /api/sales`
+- `GET /api/sales/pending`
+- `GET /api/sales/{id}`
+- `POST /api/sales`
+- `POST /api/sales/{id}/payments`
+- `GET /api/suppliers`
+- `GET /api/suppliers/{id}`
+- `POST /api/suppliers`
+- `PATCH /api/suppliers/{id}`
+- `DELETE /api/suppliers/{id}`
 
 ## Filosofia de trabajo
 
@@ -171,6 +198,7 @@ npm run dev
 ## Documentacion disponible
 
 - [docs/architecture.md](/c:/Users/mateo/Documents/github/repos/Gestor-negocio/docs/architecture.md): arquitectura y decisiones base
+- [docs/database-schema.md](/c:/Users/mateo/Documents/github/repos/Gestor-negocio/docs/database-schema.md): detalle de tablas, relaciones y equivalencia con el prototipo
 - [docs/getting-started.md](/c:/Users/mateo/Documents/github/repos/Gestor-negocio/docs/getting-started.md): instalacion y puesta en marcha
 - [docs/manual-testing.md](/c:/Users/mateo/Documents/github/repos/Gestor-negocio/docs/manual-testing.md): checklist de prueba manual
 - [docs/repository-guide.md](/c:/Users/mateo/Documents/github/repos/Gestor-negocio/docs/repository-guide.md): guia para quienes clonen y trabajen en el repo
